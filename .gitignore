@@ -1,0 +1,34 @@
+# ── Python / Django (backend/) ──
+backend/.venv/
+backend/venv/
+__pycache__/
+*.py[cod]
+*.pyc
+backend/**/migrations/__pycache__/
+db.sqlite3
+staticfiles/
+media/
+backend/.env
+backend/**/.env
+
+# ── Node / React / TS (frontend/) ──
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+frontend/.env
+frontend/**/.env.local
+
+# ── Docker ──
+*.env
+.env.*
+docker-compose.override.yml
+
+# ── IDE / OS ──
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Logs ──
+*.log
