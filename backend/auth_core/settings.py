@@ -11,6 +11,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +26,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@vosx=_^e_ni-(^i%elq2mso0@1eg^zqm&cb-s!us&3#q0#ub9'
+SECRET_KEY = env("SECRET_KEY", default="insecure_key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+# DEBUG = True
+DEBUG = env.bool("DEBUG", default=True)
 
 # Application definition
 
@@ -37,19 +41,44 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'auth_users',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'auth_core.urls'
+
+# CORS configuration
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS', default=True)
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOW_HEADERS = [
+  'authorization',
+  'content-type',
+  'x-refresh-token', 
+]
+
 
 TEMPLATES = [
     {
@@ -69,17 +98,41 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'auth_core.wsgi.application'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=18),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': False,
+    'SIGNING_KEY': env('JWT_SIGNING_KEY'),
+}
+
+AUTH_USER_MODEL = 'auth_users.User'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        "ENGINE": env("DB_ENGINE", default="django.db.backends.mysql"),  
+                # Use MySQL engine for MariaDB compatibility
+        'NAME': env('DB_NAME', default='auth_users'),
+        'USER': env('DB_USER', default='root'),      # For Localhost
+        'PASSWORD': env('DB_PASSWORD', default=''),  # For Localhost
+        'HOST': env('DB_HOST', default='localhost'), 
+        'PORT': env('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',  # Set charset to utf8mb4 for better Unicode support
+            'collation': 'utf8mb4_unicode_ci',  # Ensure the collation is utf8mb4-based
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -105,7 +158,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Los_Angeles'
 
 USE_I18N = True
 
@@ -121,3 +174,109 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# django.contrib.sites requires exactly one "Site" row to exist, and SITE_ID tells
+# Django which row (by primary key) represents THIS running instance. It matters
+# for multi-domain Django setups serving different sites from one codebase — not
+# our case, but allauth hard-requires contrib.sites to be configured regardless,
+# since it uses Site internally to build things like OAuth redirect URLs.
+# We'll only ever have one row (id=1), so this is a fixed, "set it and forget it" value.
+SITE_ID = 1
+
+
+# Django's default only knows how to authenticate against username/password
+# (ModelBackend). allauth needs its own backend added alongside it to handle
+# account lookups its way — e.g. resolving a user by the email tied to a Google
+# login, linking a social account to an existing user, etc. Order matters:
+# Django tries these top-to-bottom, so ModelBackend (normal username/password
+# login) stays first, allauth's backend is the fallback for anything it handles.
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+
+# dj-rest-auth's login/registration endpoints have their own opinion about how to
+# authenticate a successful login response — by default, that's Django's classic
+# session/token auth, NOT the JWT setup we already configured in SIMPLE_JWT above.
+# USE_JWT=True tells dj-rest-auth to actually issue our JWT access/refresh tokens
+# on login instead. The cookie settings put the refresh token in an httpOnly
+# cookie (per our platform's shared-secret/shared-domain design) rather than
+# returning it in the JSON body, where frontend JS could read it.
+REST_AUTH = {
+    'USE_JWT': True,
+    # 'JWT_AUTH_HTTPONLY': True,
+    'JWT_AUTH_COOKIE': 'access_token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+}
+
+
+# ==============================
+# LOGGING CONFIGURATION
+# ==============================
+# Django logging setup that reads LOG_LEVEL from .env.
+# Logs are stored in logs/django.log (ensure the 'logs/' directory exists).
+# Adjust log level per environment: DEBUG (dev), INFO (staging), WARNING (prod).
+LOG_LEVEL = env("LOG_LEVEL", default="INFO") # Default to WARNING if not set
+
+# Define log directory
+LOG_DIR = BASE_DIR / "logs"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": LOG_LEVEL,
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": str(LOG_DIR / "django.log"), 
+            "when": "midnight",  # Rotate logs at midnight
+            "interval": 1,  # Rotate every 1 day
+            'backupCount': 10,  # Keep the last 10 days of logs
+            'formatter': 'verbose',
+            'delay': True,
+
+            # When the RotatingFileHandler is used without the delay option, it opens the log file
+            # as soon as the logging configuration is loaded, even before any logging takes place.
+            # This can result in the file being locked for the entire process, preventing log
+            # rotation (or renaming of the log file) because the file is still being held open by
+            # the logging handler.
+
+            # By setting delay: True, the RotatingFileHandler delays the opening of the log file
+            # until the first log message is written. This means the file is not immediately locked
+            # by the handler when the application starts, and it allows log rotation to proceed
+            # without any issues. Essentially, it avoids any conflicts between the log rotation
+            # process and any other process or thread that may want to access the log file
+            # (like Django’s development server, which could be holding the file open).
+
+        },
+        "console": {
+            "level": LOG_LEVEL,
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+        "loggers": {
+        # Log database queries
+        "django.db.backends": {
+            "level": LOG_LEVEL,  # You can adjust this to INFO or ERROR as needed
+            "handlers": ["file", "console"],  # Log to both file and console
+            "propagate": False,  # Prevent it from propagating to the root logger
+        },
+    },
+    "root": {
+        "handlers": ["file", "console"],
+        "level": LOG_LEVEL,
+    },
+}
