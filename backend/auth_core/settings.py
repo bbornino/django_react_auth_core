@@ -15,18 +15,21 @@ from datetime import timedelta
 import environ
 
 env = environ.Env()
-environ.Env.read_env()
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY", default="insecure_key")
+
+# Encryption key for EncryptedCharField (django-encrypted-model-fields) — protects
+# claude_api_key at rest in the database. Independent from SECRET_KEY/JWT_SIGNING_KEY;
+# rotating this one only affects encrypted fields, nothing else.
+FIELD_ENCRYPTION_KEY = env('FIELD_ENCRYPTION_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
@@ -184,6 +187,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # We'll only ever have one row (id=1), so this is a fixed, "set it and forget it" value.
 SITE_ID = 1
 
+# Domain/name for django.contrib.sites' one Site row. allauth reads this to build
+# OAuth redirect URLs, etc. Driven by .env so switching environments (dev →
+# Lightsail) doesn't require a manual DB edit — see post_migrate signal below,
+# which keeps the actual django_site row in sync with these values automatically.
+SITE_DOMAIN = env('SITE_DOMAIN', default='localhost:8000')
+SITE_NAME = env('SITE_NAME', default='Project Zero')
+
 
 # Django's default only knows how to authenticate against username/password
 # (ModelBackend). allauth needs its own backend added alongside it to handle
@@ -209,6 +219,10 @@ REST_AUTH = {
     # 'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_COOKIE': 'access_token',
     'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'TOKEN_MODEL': None,   # We're JWT-only — this disables dj-rest-auth's classic
+                           # token-auth requirement, since USE_JWT=True already
+                           # covers authentication and we don't want a second,
+                           # unused token table alongside it.
 }
 
 

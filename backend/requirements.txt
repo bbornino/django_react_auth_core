@@ -6,5 +6,6 @@ django-encrypted-model-fields
 django-allauth
 dj-rest-auth[with_social]
 psycopg2-binary
+mysqlclient
 django-environ
 gunicorn
