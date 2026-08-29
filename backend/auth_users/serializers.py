@@ -19,17 +19,28 @@ class CustomRegisterSerializer(RegisterSerializer):
     ACCOUNT_USER_MODEL_USERNAME_FIELD is None, but dj-rest-auth's base
     RegisterSerializer hardcodes the field regardless. Overriding it here is
     the only way to remove it from validation without conflicting with either.
+    Adds `name`, since neither allauth nor dj-rest-auth
+    know about it — this is a platform-specific field, not something the base
+    RegisterSerializer can be told about via settings. custom_signup() is
+    dj-rest-auth's own extension point for exactly this: it runs right after
+    user.save() inside RegisterSerializer.save(), so this is the correct place
+    to persist any field the base serializer has no built-in concept of.
     """
     username = None
+    name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    def custom_signup(self, request, user):
+        user.name = self.validated_data.get('name','')
+        user.save(update_fields=['name'])
 
 class UserListSerializer(serializers.ModelSerializer):
     """Minimal fields for list views — enough to identify a user in a table
     or dropdown without exposing profile detail or sensitive fields."""
 
     class Meta:
-        """Maps to the User model; only id/email/display_name/is_active exposed."""
+        """Maps to the User model; only id/email/name/is_active exposed."""
         model = User
-        fields = ["id", "email", "display_name", "is_active", "avatar_url"]
+        fields = ["id", "email", "name", "is_active", "avatar_url"]
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """
@@ -44,8 +55,8 @@ class UserDetailSerializer(serializers.ModelSerializer):
         """Maps to the User model; only exposing user editable fields."""
         model = User
         fields = [
-            "id", "email", "display_name", "about_me", "role",
-            "email_opt_out", "is_active", "is_staff", "date_joined", "dark_mode", "avatar"
+            "id", "email", "name", "about_me", "role",
+            "email_opt_out", "is_active", "is_staff", "date_joined", "dark_mode", "avatar_url"
         ]
         read_only_fields = ["role", "is_staff", "is_active", "date_joined", "avatar_url"]
 
@@ -60,7 +71,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         """Maps to the User model; only exposing admin editable fields."""
         model = User
         fields = [
-            "id", "email", "display_name", "about_me", "role",
+            "id", "email", "name", "about_me", "role",
             "email_opt_out", "is_active", "is_staff", "is_superuser",
             "date_joined", "last_login", "avatar_url", "dark_mode"
         ]

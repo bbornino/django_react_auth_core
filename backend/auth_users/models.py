@@ -86,7 +86,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Friendly display name for greetings/admin identification — not used for login
     # (email/USERNAME_FIELD handles that). Optional since OAuth signups may not
     # always provide one immediately.
-    display_name = models.CharField(max_length=100, blank=True, default='')
+    name = models.CharField(max_length=100, blank=True, default='')
 
     # Populated from Google's OAuth profile picture (SocialAccount.extra_data
     # 'picture' field) on every Google login, not just the first — keeps it from
