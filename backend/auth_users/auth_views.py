@@ -10,6 +10,21 @@ to the Google adapter.
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from django.contrib.auth import password_validation
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def password_rules(_request):
+    """
+    Returns the currently configured AUTH_PASSWORD_VALIDATORS as human-readable
+    strings, so the frontend can display real password rules instead of a
+    hardcoded guess that could drift out of sync with settings.py.
+    """
+    return Response(password_validation.password_validators_help_texts())
 
 
 class GoogleLogin(SocialLoginView):

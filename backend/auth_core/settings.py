@@ -207,6 +207,36 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
+# This project's custom User model (AbstractBaseUser + PermissionsMixin) has no
+# username field at all — not nulled out, never declared, since login is email-only.
+# These three settings tell allauth 65.4+'s newer signup/login API to stop expecting
+# one. Replaces the older ACCOUNT_AUTHENTICATION_METHOD/ACCOUNT_USERNAME_REQUIRED
+# settings, which are deprecated as of this allauth version (confirmed: 65.19.1).
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+
+
+# W036: MariaDB doesn't support conditional unique constraints, so allauth's
+# EmailAddress "only one primary email" and "verified email is globally unique"
+# constraints won't be enforced at the DB level. allauth's own application-level
+# logic (EmailAddressManager) maintains both invariants in normal use; the only
+# real gap is a raw-SQL write or a race condition bypassing that logic. Accepted
+# tradeoff of the MariaDB decision — see platform doc's Database section.
+SILENCED_SYSTEM_CHECKS = ['models.W036']
+
+
+# Points dj-rest-auth at our CustomRegisterSerializer (auth_users/serializers.py),
+# which drops the username field entirely. Needed because allauth's own system
+# check forbids listing 'username' in ACCOUNT_SIGNUP_FIELDS when
+# ACCOUNT_USER_MODEL_USERNAME_FIELD is None, but dj-rest-auth's base
+# RegisterSerializer hardcodes a required username field regardless — overriding
+# the serializer directly is the only way to reconcile the two.
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'auth_users.serializers.CustomRegisterSerializer',
+}
+
+
 # dj-rest-auth's login/registration endpoints have their own opinion about how to
 # authenticate a successful login response — by default, that's Django's classic
 # session/token auth, NOT the JWT setup we already configured in SIMPLE_JWT above.

@@ -9,6 +9,18 @@ for how requests get routed to the right one.
 """
 from rest_framework import serializers
 from auth_users.models import User
+from dj_rest_auth.registration.serializers import RegisterSerializer
+
+class CustomRegisterSerializer(RegisterSerializer):
+    """
+    Drops the username field entirely — this User model has none by design
+    (email-only login). Settings alone can't suppress it: allauth's own system
+    check forbids listing 'username' in ACCOUNT_SIGNUP_FIELDS when
+    ACCOUNT_USER_MODEL_USERNAME_FIELD is None, but dj-rest-auth's base
+    RegisterSerializer hardcodes the field regardless. Overriding it here is
+    the only way to remove it from validation without conflicting with either.
+    """
+    username = None
 
 class UserListSerializer(serializers.ModelSerializer):
     """Minimal fields for list views — enough to identify a user in a table
