@@ -16,7 +16,7 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
         if (hasRun.current) return
         hasRun.current = true
 
-        axios.post(`${API_BASE_URL}/auth/refresh/`, {}, { withCredentials: true })
+        axios.post(`${API_BASE_URL}/auth/token/refresh/`, {}, { withCredentials: true })
             .then((res) => {
                 const { access } = res.data
                 setAccessToken(access)

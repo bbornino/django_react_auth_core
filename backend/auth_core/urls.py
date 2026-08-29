@@ -17,7 +17,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
 from auth_users.auth_views import GoogleLogin, password_rules
 from auth_users.users_views import UserViewSet
 
@@ -29,7 +28,6 @@ urlpatterns = [
     path('auth/', include('dj_rest_auth.urls')),              # login, logout, password reset
     path('auth/password-rules/', password_rules),
     path('auth/register/', include('dj_rest_auth.registration.urls')),  # register
-    path('auth/refresh/', TokenRefreshView.as_view()),  # from simplejwt directly
     path('auth/google/', GoogleLogin.as_view()),              # your one custom piece
 ]
 
