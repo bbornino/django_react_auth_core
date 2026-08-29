@@ -27,7 +27,7 @@ router.register('users', UserViewSet, basename='user')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('dj_rest_auth.urls')),              # login, logout, password reset
-    path('auth/registration/', include('dj_rest_auth.registration.urls')),  # register
+    path('auth/register/', include('dj_rest_auth.registration.urls')),  # register
     path('auth/refresh/', TokenRefreshView.as_view()),  # from simplejwt directly
     path('auth/google/', GoogleLogin.as_view()),              # your one custom piece
 ]
