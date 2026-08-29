@@ -217,6 +217,15 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_LOGIN_METHODS = {'email'}
 
 
+# 'none' skips allauth's email-confirmation step entirely on signup — no SMTP
+# dependency required. Temporary: this project has no email backend configured
+# yet (SES is the eventual real target once Job Tracker's digest feature needs
+# it — see platform doc). This is purely a settings toggle, not a code path
+# removed: flipping back to 'optional' or 'mandatory' once EMAIL_BACKEND points
+# at real SES credentials requires no other changes.
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+
 # W036: MariaDB doesn't support conditional unique constraints, so allauth's
 # EmailAddress "only one primary email" and "verified email is globally unique"
 # constraints won't be enforced at the DB level. allauth's own application-level
@@ -232,9 +241,9 @@ SILENCED_SYSTEM_CHECKS = ['models.W036']
 # ACCOUNT_USER_MODEL_USERNAME_FIELD is None, but dj-rest-auth's base
 # RegisterSerializer hardcodes a required username field regardless — overriding
 # the serializer directly is the only way to reconcile the two.
-REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'auth_users.serializers.CustomRegisterSerializer',
-}
+# REST_AUTH_REGISTER_SERIALIZERS = {
+#     'REGISTER_SERIALIZER': 'auth_users.serializers.CustomRegisterSerializer',
+# }
 
 
 # dj-rest-auth's login/registration endpoints have their own opinion about how to
@@ -249,6 +258,7 @@ REST_AUTH = {
     # 'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_COOKIE': 'access_token',
     'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'REGISTER_SERIALIZER': 'auth_users.serializers.CustomRegisterSerializer',
     'TOKEN_MODEL': None,   # We're JWT-only — this disables dj-rest-auth's classic
                            # token-auth requirement, since USE_JWT=True already
                            # covers authentication and we don't want a second,
