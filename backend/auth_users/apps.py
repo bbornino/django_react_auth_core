@@ -14,7 +14,7 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
 
-def sync_site(_sender, **_kwargs):
+def sync_site(sender, **_kwargs):       # pylint: disable=unused-argument
     """After every migrate, update the one Site row to match .env's
     SITE_DOMAIN/SITE_NAME — keeps allauth's redirect URLs correct per
     environment without a manual shell command on every deploy."""

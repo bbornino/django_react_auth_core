@@ -29,7 +29,7 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         """Maps to the User model; only id/email/display_name/is_active exposed."""
         model = User
-        fields = ["id", "email", "display_name", "is_active"]
+        fields = ["id", "email", "display_name", "is_active", "avatar_url"]
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """
@@ -45,9 +45,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "email", "display_name", "about_me", "role",
-            "email_opt_out", "is_active", "is_staff", "date_joined",
+            "email_opt_out", "is_active", "is_staff", "date_joined", "dark_mode", "avatar"
         ]
-        read_only_fields = ["role", "is_staff", "is_active", "date_joined"]
+        read_only_fields = ["role", "is_staff", "is_active", "date_joined", "avatar_url"]
 
 class UserAdminSerializer(serializers.ModelSerializer):
     """
@@ -62,5 +62,5 @@ class UserAdminSerializer(serializers.ModelSerializer):
         fields = [
             "id", "email", "display_name", "about_me", "role",
             "email_opt_out", "is_active", "is_staff", "is_superuser",
-            "date_joined", "last_login",
+            "date_joined", "last_login", "avatar_url", "dark_mode"
         ]

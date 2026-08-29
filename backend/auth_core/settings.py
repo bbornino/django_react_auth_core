@@ -258,6 +258,7 @@ REST_AUTH = {
     # 'JWT_AUTH_HTTPONLY': True,
     'JWT_AUTH_COOKIE': 'access_token',
     'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'USER_DETAILS_SERIALIZER': 'auth_users.serializers.UserDetailSerializer',
     'REGISTER_SERIALIZER': 'auth_users.serializers.CustomRegisterSerializer',
     'TOKEN_MODEL': None,   # We're JWT-only — this disables dj-rest-auth's classic
                            # token-auth requirement, since USE_JWT=True already

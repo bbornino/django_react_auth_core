@@ -88,6 +88,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     # always provide one immediately.
     display_name = models.CharField(max_length=100, blank=True, default='')
 
+    # Populated from Google's OAuth profile picture (SocialAccount.extra_data
+    # 'picture' field) on every Google login, not just the first — keeps it from
+    # going stale if the user updates their photo upstream. Stays blank forever
+    # for email/password-only users, since there's no Google data to pull from;
+    # frontend should fall back to initials/a default icon in that case.
+    avatar_url = models.URLField(blank=True, default='')
+
+    # User-level UI preference, shared across every tenant app via the common DB
+    # (same reasoning as display_name/role living directly on User rather than a
+    # separate profile table). Defaults to False rather than following system
+    # preference, since there's no reliable server-side signal for that at login
+    # time — frontend can still detect prefers-color-scheme for a first-run guess
+    # if desired, but the stored value is what persists across sessions.
+    dark_mode = models.BooleanField(default=False)
+    
     # Short bio/intro, mainly so the admin (and other small-circle users, if ever
     # shown) can tell who's who beyond just an email address.
     about_me = models.TextField(blank=True, default='')
