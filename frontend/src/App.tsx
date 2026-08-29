@@ -1,6 +1,10 @@
 import { Routes, Route } from 'react-router'
+import { ProtectedRoute } from './components/protected-route'
 import { Welcome } from './pages/welcome-page'
+import { RegisterPage} from './pages/register-page'
+import { Dashboard } from './pages/dashboard-page'
 import { NavBar } from './components/nav-bar'
+import { LoginPage } from './pages/login-page'
 
 function App() {
   return (
@@ -9,6 +13,12 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Welcome /> } />
+        <Route path="/register" element={<RegisterPage /> } />
+        <Route path="/login" element={<LoginPage /> } />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard /> } />
+        </Route>
       </Routes>
     </div>
 
