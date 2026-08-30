@@ -6,6 +6,7 @@ import { Dashboard } from './pages/dashboard-page'
 import { NavBar } from './components/nav-bar'
 import { LoginPage } from './pages/login-page'
 import { EditUserPage } from './pages/edit-user-page'
+import { GoogleCallbackPage } from './pages/google-callback-page'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Welcome /> } />
         <Route path="/register" element={<RegisterPage /> } />
         <Route path="/login" element={<LoginPage /> } />
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage /> } />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard /> } />

@@ -14,6 +14,8 @@ from django.contrib.auth import password_validation
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+import environ
+env = environ.Env()
 
 
 @api_view(['GET'])
@@ -37,5 +39,4 @@ class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
 
-    # TODO: move to env-driven value, matches CORS_ALLOWED_ORIGINS for prod
-    callback_url = "http://localhost:5173"
+    callback_url = env('GOOGLE_CALLBACK_URL', default='http://localhost:5173/auth/google/callback')

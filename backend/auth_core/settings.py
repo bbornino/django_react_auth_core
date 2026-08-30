@@ -179,6 +179,40 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Tells allauth's Google provider which app credentials to use and what scopes
+# to request. client_id/secret come from Google Cloud Console (see the
+# GoogleLogin comment in auth_views.py for the redirect URI registered
+# alongside them). 'key' stays empty — that field is a legacy holdover from
+# OAuth1-style providers and unused for OAuth2 providers like Google.
+# 'profile' + 'email' scopes are the minimum needed to populate User.email and
+# avatar_url (via extra_data['picture']) on first login — no broader Google
+# API access requested.
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': env('GOOGLE_CLIENT_ID'),
+            'secret': env('GOOGLE_CLIENT_SECRET'),
+            'key': ''
+        },
+        'SCOPE': ['profile', 'email'],
+    }
+}
+
+
+# Without this, first-time Google login tries to redirect to allauth's HTML
+# "complete your signup" template view — which doesn't exist in this project
+# (pure DRF API, no allauth template URLs installed). Auto-signup completes
+# registration immediately from the Google profile data instead, matching
+# GoogleLogin's own docstring: "no separate register-with-Google endpoint needed."
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+
+# Auto-links a Google login to an existing password-based account when the
+# emails match, rather than allauth's default conservative behavior of
+# blocking with a conflict. See auth_users/adapters.py for the full reasoning.
+SOCIALACCOUNT_ADAPTER = 'auth_users.adapters.CustomSocialAccountAdapter'
+
+
 # django.contrib.sites requires exactly one "Site" row to exist, and SITE_ID tells
 # Django which row (by primary key) represents THIS running instance. It matters
 # for multi-domain Django setups serving different sites from one codebase — not

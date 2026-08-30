@@ -16,8 +16,12 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
         if (hasRun.current) return
         hasRun.current = true
 
-        axios.post(`${API_BASE_URL}/auth/token/refresh/`, {}, { withCredentials: true })
+        axios.post(`${API_BASE_URL}/auth/token/refresh/`, {}, { 
+            withCredentials: true,
+            validateStatus: (status) => status < 500
+        })
             .then((res) => {
+                if (res.status !== 200) return // no valid cookie - expected, not an error
                 const { access } = res.data
                 setAccessToken(access)
                 return apiClient.get('/users/me/').then((meRes) => {
@@ -25,7 +29,8 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
                 })
             })
             .catch(() => {
-                // No valid cookie, or refresh failed - user just isn't logged in.
+                // Genuine unexpected failure (network down, 500, etc.) — still silent
+                // by design, since "not logged in" is a normal outcome either way.
             })
             .finally(() => finishBootstrapping())
     }, [setAuth, finishBootstrapping, setAccessToken])
