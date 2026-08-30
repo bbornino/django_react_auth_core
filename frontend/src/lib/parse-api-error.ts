@@ -11,7 +11,10 @@ export function parseApiError(err: unknown, statusMessages: Record<number, strin
     }
 
     if (typeof err.response?.data === 'object' && err.response.data) {
-        return Object.values(err.response.data).flat().join(' ')
+        const messages = Object.entries(err.response.data)
+            .map(([field, msgs]) => `${field}: ${(Array.isArray(msgs) ? msgs : [msgs]).join(' ')}`)
+
+        return messages.join('\n')
     }
 
     if (typeof err.response?.data === 'string') {
