@@ -40,7 +40,11 @@ export function EditUserPage() {
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', !!previewDarkMode)
-    })
+
+        return () => {
+            document.documentElement.classList.toggle('dark', !!currentUser?.darkMode)
+        }
+    }, [previewDarkMode, currentUser?.darkMode])
 
     useEffect(() => {
         if (currentUser && currentUser.role !== 'admin' && String(currentUser.id) !== effectiveUserId) {
