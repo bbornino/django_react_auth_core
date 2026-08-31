@@ -2,9 +2,18 @@
 
 The Django + React auth shell for Project Zero — the deployment blueprint powering
 every tenant app on `apps.bornino.net` (Job Tracker, Garden Expert, and future apps).
-Email/password and Google OAuth login, JWT-based auth with an httpOnly refresh
-cookie, role-based access, and a per-user Anthropic API key slot — built once here,
-copied into each tenant app's repo as its starting point.
+Email/password and Google OAuth login (including account linking by email and
+avatar sync), JWT-based auth with an httpOnly refresh cookie, role-based access,
+self- and admin-editable user profiles, and a per-user Anthropic API key slot —
+built once here, copied into each tenant app's repo as its starting point.
+
+## Status
+
+Register, Login (email/password + Google), Logout, session persistence across
+reloads and multiple tabs, route protection, and self/admin profile editing are
+all built and confirmed working end-to-end against the real backend — not just
+reasoned about. Automated tests are the one major piece still outstanding; see
+**Known gaps** below for everything else.
 
 ## Why this exists
 
@@ -58,11 +67,48 @@ auth pattern, not a live service other apps call over the network (see
   an inconsistency.** `lib/map-user-response.ts` is the one place that
   translation happens — never rename the frontend `User` interface to match the
   wire format, and never skip the mapper when handling a fresh API response.
-- **`avatar_url` is read-only from the API's perspective**, populated from
-  Google's OAuth profile (`picture` field) on every login — not just the first —
-  so it self-heals if the user updates their photo upstream. Stays blank forever
-  for email/password-only users; the frontend should fall back to initials or a
-  default icon in that case.
+- **Google OAuth uses the redirect flow, not a popup.** `GoogleAuthButton`
+  navigates the browser to Google's consent screen directly (built from
+  `VITE_GOOGLE_CLIENT_ID` + the registered redirect URI); Google redirects back
+  to `GoogleCallbackPage` (`/auth/google/callback` on the frontend) with a
+  `code` query param, which gets POSTed to `auth/google/`. dj-rest-auth's
+  `SocialLoginSerializer` handles the code-for-token exchange internally — no
+  custom backend exchange view was needed. `GoogleCallbackPage` has its own
+  `useRef` single-fire guard, same as `AuthBootstrap`: OAuth codes are single-use,
+  so StrictMode's double-invoke would otherwise burn the code on a throwaway
+  duplicate request and fail the real one.
+- **`SOCIALACCOUNT_AUTO_SIGNUP = True` is required** for first-time Google
+  signups to work at all in this API-only setup. Without it, allauth's default
+  signup flow tries to redirect to an HTML "complete your signup" template view
+  (`socialaccount_signup`) that doesn't exist here — `NoReverseMatch`, every
+  time. This setting tells allauth to complete signup immediately from the
+  Google profile data instead.
+- **`CustomSocialAccountAdapter` (`auth_users/adapters.py`) does two things
+  allauth doesn't by default:** links a Google login to an existing
+  password-based account when the emails match (allauth's own
+  `assess_unique_email` treats a matching-but-unlinked email as a conflict and
+  blocks it, to prevent account-takeover via an unverified email claim — this
+  app instead trusts Google's verified email as safe to auto-link), and syncs
+  `avatar_url` from Google's profile picture on every login. The two code paths
+  need separate, explicit `save(update_fields=['avatar_url'])` calls — a repeat
+  login on an *already-linked* account never triggers a `user.save()` anywhere
+  else in allauth's normal login flow, so an in-memory-only field change here
+  would otherwise silently vanish without ever reaching the database, even
+  though it'd briefly look correct in that request's own login response.
+- **`avatar_url` is read-only from the API's perspective.** Stays blank forever
+  for email/password-only users; the frontend falls back to initials via
+  `UserAvatar` in that case.
+- **Self vs. admin profile editing is one page (`EditUserPage`), one schema
+  (`adminUserSchema`), not two.** Admin-only fields (`role`, `is_active`,
+  `is_staff`) are `.optional()` in the Zod schema rather than a second schema
+  type — a non-admin's form simply never renders those `Controller` fields, so
+  they stay `undefined` and axios drops them from the JSON body entirely.
+  `PATCH`, not `PUT`, is what makes this safe: PUT expects a complete resource
+  and 400s on any field DRF considers required but absent (this cost real
+  debugging time before landing on PATCH); PATCH only validates fields actually
+  present in the request. The backend's `UserViewSet.get_queryset()` — not
+  anything client-side — is the real enforcement for who can edit whom; the
+  frontend's own role check is purely a UX shortcut to skip a doomed request.
 
 ## Deployment model
 
@@ -80,8 +126,21 @@ until real usage (this repo, then a second app) could inform the call.
 
 ## Known gaps / bin list
 
-Things surfaced during development, deliberately deferred rather than solved —
-most likely picked up together whenever the microservice retrofit happens.
+**Automated tests — the main outstanding item.** Nothing here has coverage yet;
+everything's been verified by hand. Highest-value starting points: pure
+functions (`parseApiError`, `mapUserResponse`) need no rendering to test; Django
+side, `UserViewSet.get_queryset()`'s self-vs-admin scoping,
+`CustomRegisterSerializer`'s username-drop, and `CustomSocialAccountAdapter`'s
+email-merge/avatar-sync logic are the highest-value backend targets, given how
+much non-obvious conditional logic lives in them.
+
+**Repo hygiene**
+- No `.env.example` yet (backend or frontend) — a real list of required vars
+  (`GOOGLE_CALLBACK_URL`, `GOOGLE_CLIENT_ID`/`SECRET`, `VITE_GOOGLE_CLIENT_ID`,
+  etc.) has accumulated; whoever copies this shell into the next app's repo
+  needs a checked-in template, not a reverse-engineering exercise.
+- Confirm `frontend/.env` is gitignored the same way the backend's already is.
+- A stray `// debugger` comment is still sitting in `EditUserPage.tsx`.
 
 **Account-editing features**
 - Password change flow — needs current-password re-entry; a separate form from
@@ -91,19 +150,13 @@ most likely picked up together whenever the microservice retrofit happens.
   table in sync before this is safe to expose.
 - Avatar upload — user-provided, independent of the Google-synced `avatar_url`.
   Open question: should a user be able to override their Google avatar at all?
+- "Connect your Google account" from within an authenticated session — right
+  now, linking only happens automatically when a Google login's email matches
+  an existing account; there's no explicit, user-initiated "link this" flow.
 - `claude_api_key` write path — no endpoint exists yet. Needs to be a narrow,
-  dedicated action, never bundled into the general profile PUT (the field is
-  deliberately excluded from every serializer since it would otherwise
+  dedicated action, never bundled into the general profile PUT/PATCH (the field
+  is deliberately excluded from every serializer since it would otherwise
   round-trip decrypted plaintext, defeating `EncryptedCharField`'s protection).
-
-**OAuth completion**
-- Real Google Cloud Console credentials — `SOCIALACCOUNT_PROVIDERS` is still
-  empty.
-- `GoogleLogin.callback_url` — hardcoded to `localhost:5173`, needs to become
-  `.env`-driven, matching `CORS_ALLOWED_ORIGINS` before any real deployment.
-- The actual OAuth flow shape was never finalized — `@react-oauth/google`
-  (popup, token posted to the backend) vs. the placeholder button's redirect-
-  based approach are incompatible designs; pick one before building it out.
 
 **Known bugs, low priority but real**
 - Duplicate-email registration raises a raw `IntegrityError` instead of a clean
@@ -117,8 +170,8 @@ most likely picked up together whenever the microservice retrofit happens.
   worth removing for clarity once revisited.
 
 **Platform-level (from the broader architecture doc, not just this repo)**
-- Role-gated views — `Role.ADMIN` exists on the model; nothing built yet
-  actually gates on it.
+- Role-gated views beyond `EditUserPage` — `Role.ADMIN` exists on the model;
+  nothing else built yet actually gates on it.
 - "Log in as user" admin support tool.
 - Guest accounts with a capped, shared token pool.
 - Platform billing/usage-tracking mechanism for per-user Claude API usage.
@@ -131,6 +184,8 @@ most likely picked up together whenever the microservice retrofit happens.
   wide-open setting.
 - `JWT_AUTH_COOKIE_DOMAIN` — needs the shared parent domain (e.g. `.bornino.net`)
   for cross-subdomain SSO to actually work.
+- Google Cloud Console — currently only `localhost:5173` is registered as an
+  authorized origin/redirect target. Real domains need adding before deploy.
 - `sync_site`'s `post_migrate` hook — written, never exercised against a second,
   real `SITE_DOMAIN` value (i.e., an actual deploy).
 
@@ -143,14 +198,16 @@ independently calling refresh is safe — confirmed via real multi-tab testing.
 
 ```
 backend/
-  auth_core/        Django project (settings, urls, root config)
-  auth_users/        Custom User model, serializers, views, migrations
+  auth_core/         Django project (settings, urls, root config)
+  auth_users/         Custom User model, serializers, views, adapters, migrations
 frontend/
   src/
-    components/      Shared UI (NavBar, TextField, FieldError, SystemError,
-                      PageHeading, NavLink, AuthBootstrap, ProtectedRoute)
-    components/ui/    shadcn-generated primitives
-    lib/             api-client, parseApiError, mapUserResponse, constants
-    pages/           Welcome, Login, Register, Dashboard (public/protected)
-    stores/          Zustand auth store
+    components/       Shared UI (NavBar, TextField, CheckboxField, TextareaField,
+                       SelectField, FieldError, SystemError, PageHeading, PageCard,
+                       NavLink, UserAvatar, AuthBootstrap, ProtectedRoute)
+    components/ui/     shadcn-generated primitives
+    lib/              api-client, parseApiError, mapUserResponse, constants
+    pages/            Welcome, Login, Register, Dashboard, EditUser,
+                       GoogleCallback (public/protected)
+    stores/           Zustand auth store
 ```
