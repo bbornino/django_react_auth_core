@@ -7,8 +7,10 @@ import { NavBar } from './components/nav-bar'
 import { LoginPage } from './pages/login-page'
 import { EditUserPage } from './pages/edit-user-page'
 import { GoogleCallbackPage } from './pages/google-callback-page'
+import { useThemeSync } from './hooks/use-theme-sync'
 
 function App() {
+  useThemeSync()
   return (
     <div>
       <NavBar />

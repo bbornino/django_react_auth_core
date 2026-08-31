@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/stores/auth-store"
 import { type UserFormValues, type UserDetail, 
@@ -29,11 +29,17 @@ export function EditUserPage() {
     const effectiveUserId = paramUserId ?? String(currentUser?.id)
     const [serverError, setServerError] = useState<string | null>(null)
     const isAdmin = currentUser?.role === 'admin'
-
+    
     const {
         register, control, handleSubmit, reset, formState: { errors, isSubmitting },
     } = useForm<AdminUserFormValues>({ 
         resolver: zodResolver(adminUserSchema)
+    })
+
+    const previewDarkMode = useWatch({ control, name: 'dark_mode'})
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', !!previewDarkMode)
     })
 
     useEffect(() => {
