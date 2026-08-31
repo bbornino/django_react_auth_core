@@ -3,6 +3,7 @@ import { NavLink } from "./nav-link"
 import { apiClient } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth-store'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu'
+import { UserAvatar } from './user-avatar'
 
 export function NavBar() {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -32,7 +33,8 @@ export function NavBar() {
             <div className='flex gap-4'>
                 {isAuthenticated ? (
                     <DropdownMenu>
-                        <DropdownMenuTrigger className="text-sm text-white hover:text-gray-300">
+                        <DropdownMenuTrigger className="flex items-center gap-2 text-sm text-white hover:text-gray-300">
+                            <UserAvatar avatarUrl={user?.avatarUrl} name={user?.name} size={38} />
                             {user?.name || user?.email}
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

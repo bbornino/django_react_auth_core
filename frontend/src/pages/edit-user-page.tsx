@@ -16,6 +16,7 @@ import { TextareaField } from "@/components/textarea-field"
 import { SelectField } from "@/components/select-field"
 import { Button } from "@/components/ui/button"
 import { ROLE_OPTIONS } from "@/lib/constants"
+import { UserAvatar } from "@/components/user-avatar"
 
 
 export function EditUserPage() {
@@ -74,7 +75,8 @@ export function EditUserPage() {
     return(
         <PageCard title="Edit User" center={false}>
             { user && !isAdmin &&  (
-                <div className="text-sm text-muted-foreground space-y-1 grid grid cols-1 lg:grid-cols-3 gap-4">
+                <div className="text-sm text-muted-foreground space-y-1 grid grid cols-1 lg:grid-cols-4 gap-4">
+                    <UserAvatar avatarUrl={user.avatar_url} name={user.name} size={48} />
                     <p>Role: {user.role}</p>
                     <p>Status: {user.is_active ? 'Active' : 'Inactive'}</p>
                     <p>Is Staff: {user.is_staff ? 'Yes': 'No'}</p>
@@ -84,14 +86,19 @@ export function EditUserPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
 
                 { user && isAdmin && (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                        <div className="lg:col-span-2">
-
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <div className="lg:col-span-1">
+                            <UserAvatar avatarUrl={user.avatar_url} name={user.name} size={48} />
                         </div>
-                        <CheckboxField label="Is Active" id="is_active" control={control} error={errors.is_active?.message} />
-                        <CheckboxField label="Is Staff" id="is_staff" control={control} error={errors.is_staff?.message} />
-                        <SelectField label="Role" id="role" control={control} options={ROLE_OPTIONS} error={errors.role?.message}
-                        />
+                        <div className="lg:col-span-5">
+                            <SelectField label="Role" id="role" control={control} options={ROLE_OPTIONS} error={errors.role?.message} />
+                        </div>
+                        <div className="lg:col-span-3">
+                            <CheckboxField label="Is Active" id="is_active" control={control} error={errors.is_active?.message} />
+                        </div>
+                        <div className="lg:col-span-3">
+                            <CheckboxField label="Is Staff" id="is_staff" control={control} error={errors.is_staff?.message} />
+                        </div>
                     </div>
                 )}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
