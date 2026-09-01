@@ -40,7 +40,7 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         """Maps to the User model; only id/email/name/is_active exposed."""
         model = User
-        fields = ["id", "email", "name", "is_active", "avatar_url"]
+        fields = ["id", "email", "name", "is_active", "avatar_url", "role", "is_staff", "date_joined"]
 
 class UserDetailSerializer(serializers.ModelSerializer):
     """

@@ -10,6 +10,7 @@ export function NavBar() {
     const logout = useAuthStore((state) => state.logout)
     const user = useAuthStore((state) => state.user)
     const navigate = useNavigate()
+    const isAdmin = user?.role === 'admin'
 
     const handleLogout = async () => {
         try {
@@ -41,6 +42,11 @@ export function NavBar() {
                             <DropdownMenuItem render={<NavLink to="/edit-profile" />}>
                                 Edit Profile
                             </DropdownMenuItem>
+                            {isAdmin && (
+                                <DropdownMenuItem render={<NavLink to="/list-users" />}>
+                                    List Users
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={handleLogout}>
                                 Logout
                             </DropdownMenuItem>

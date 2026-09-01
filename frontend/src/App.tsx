@@ -8,6 +8,7 @@ import { LoginPage } from './pages/login-page'
 import { EditUserPage } from './pages/edit-user-page'
 import { GoogleCallbackPage } from './pages/google-callback-page'
 import { useThemeSync } from './hooks/use-theme-sync'
+import { ListUsersPage } from './pages/list-users-page'
 
 function App() {
   useThemeSync()
@@ -24,6 +25,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard /> } />
           <Route path="/edit-profile" element={<EditUserPage /> } />
+          <Route path="/edit-profile/:userId" element={<EditUserPage /> } />
+          <Route path="/list-users" element={<ListUsersPage /> } />
         </Route>
       </Routes>
     </div>
