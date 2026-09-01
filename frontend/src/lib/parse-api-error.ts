@@ -3,14 +3,14 @@ import axios from 'axios'
 
 export function parseApiError(err: unknown, statusMessages: Record<number, string> = {}): string {
     if (!axios.isAxiosError(err)) {
-        return 'Something went wrong.  Please try again.'
+        return 'Something went wrong. Please try again.'
     }
 
     if (err.response?.status && statusMessages[err.response.status]) {
         return statusMessages[err.response.status]
     }
 
-    if (typeof err.response?.data === 'object' && err.response.data) {
+    if (typeof err.response?.data === 'object' && err.response.data && Object.keys(err.response.data).length > 0) {
         const messages = Object.entries(err.response.data)
             .map(([field, msgs]) => `${field}: ${(Array.isArray(msgs) ? msgs : [msgs]).join(' ')}`)
 
@@ -21,5 +21,5 @@ export function parseApiError(err: unknown, statusMessages: Record<number, strin
         return err.response.data
     }
 
-    return 'Something went wrong.  Pleaes try again.'
+    return 'Something went wrong. Please try again.'
 }
