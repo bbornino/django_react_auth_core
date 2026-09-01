@@ -19,6 +19,8 @@ frontend/.vite/
 *.tsbuildinfo
 frontend/.env
 frontend/**/.env.local
+frontend/test-resuls
+frontend/test-results/.last-run.json
 
 # ── Docker ──
 *.env
@@ -33,3 +35,4 @@ Thumbs.db
 
 # ── Logs ──
 *.log
+
