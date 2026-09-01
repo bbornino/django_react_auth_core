@@ -1,0 +1,11 @@
+// tsconfig.e2e.json
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["e2e"]
+}
