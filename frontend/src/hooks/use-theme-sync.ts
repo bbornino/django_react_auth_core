@@ -7,7 +7,7 @@ export function useThemeSync() {
 
     useEffect(() => {
         if (darkMode !== undefined) {
-            document.documentElement.classList.toggle('dark', !darkMode)
+            document.documentElement.classList.toggle('dark', darkMode)
             localStorage.setItem('theme-hint', darkMode ? 'dark' : 'light')
         }
         
