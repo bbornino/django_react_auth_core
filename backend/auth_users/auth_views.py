@@ -9,7 +9,8 @@ to the Google adapter.
 
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.registration.views import SocialLoginView, RegisterView
+from dj_rest_auth.jwt_auth import set_jwt_cookies
 from django.contrib.auth import password_validation
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -40,3 +41,20 @@ class GoogleLogin(SocialLoginView):
     client_class = OAuth2Client
 
     callback_url = env('GOOGLE_CALLBACK_URL', default='http://localhost:5173/auth/google/callback')
+
+class CustomRegisterView(RegisterView):
+    """
+    dj-rest-auth's RegisterView returns access/refresh tokens in the JSON
+    body only — unlike LoginView, it never actually sets the JWT cookies.
+    Confirmed by reading RegisterView.create() directly: it builds a plain
+    Response with no finalize_response override, while LoginView's does call
+    set_jwt_cookies(). This meant a session created via Register never
+    survived a page reload — the refresh cookie the whole app depends on was
+    never being set. Found via a Playwright test reloading immediately after
+    registration; every prior manual/automated test only ever reloaded after
+    a real Login, which sets the cookie correctly, so this never surfaced.
+    """
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.status_code == 201 and 'access' in response.data:
+            set_jwt_cookies(response, response.data['access'], response.data.get('refresh', ''))
+        return super().finalize_response(request, response, *args, **kwargs)

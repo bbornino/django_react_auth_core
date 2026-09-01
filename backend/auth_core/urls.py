@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from auth_users.auth_views import GoogleLogin, password_rules
+from auth_users.auth_views import GoogleLogin, password_rules, CustomRegisterView
 from auth_users.users_views import UserViewSet
 
 router = DefaultRouter()
@@ -27,8 +27,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('dj_rest_auth.urls')),              # login, logout, password reset
     path('auth/password-rules/', password_rules),
-    path('auth/register/', include('dj_rest_auth.registration.urls')),  # register
+    # path('auth/register/', include('dj_rest_auth.registration.urls')),  # register
     path('auth/google/', GoogleLogin.as_view()),              # your one custom piece
+    path('auth/register/', CustomRegisterView.as_view()),
 ]
 
 urlpatterns += router.urls
