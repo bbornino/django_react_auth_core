@@ -70,7 +70,6 @@ export function EditUserPage() {
         setServerError(null)
         try {
             const response = await apiClient.patch(`/users/${effectiveUserId}/`, data)
-            console.log(response)
             if (currentUser?.id === Number(effectiveUserId)) {
                 setCurrentUser(mapUserResponse(response.data))  // to cover name change and dark mode...
             }

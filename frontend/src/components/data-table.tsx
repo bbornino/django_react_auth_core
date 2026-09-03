@@ -27,7 +27,8 @@ import { SelectInput } from "./select-input"
 // have a meaningful raw value - display-only columns (like an avtar, with no 
 // accessorKey at all) are skipped rather than exporting blank cells or trying 
 // to serialize rendered JSX.
-function buildExportRows<TData> (
+// eslint-disable-next-line react-refresh/only-export-components -- pure helper, not a component; exported specifically so it's independently unit-testable. Fast Refresh only degrades to a full reload for this file on save, which is a fine tradeoff for a file this size.
+export function buildExportRows<TData> (
     rows: Row<TData>[],
     columns: ColumnDef<TData, unknown>[]
 ): Record<string, unknown>[]{
