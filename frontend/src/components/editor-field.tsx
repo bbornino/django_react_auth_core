@@ -252,6 +252,7 @@ function TiptapEditor({ value, onChange }: { value: string; onChange: (html: str
     const [htmlDraft, setHtmlDraft] = useState(value)
 
     const editor = useEditor({
+        immediatelyRender: true,
         extensions: [
             StarterKit.configure({ link: false, codeBlock: false}),
             CharacterCount,
@@ -273,7 +274,7 @@ function TiptapEditor({ value, onChange }: { value: string; onChange: (html: str
         if (!editor) return
         if (!htmlMode) {
             // entering source view: seed the textarea from the editor's current, real content
-            setHtmlDraft(editor.getHTML)
+            setHtmlDraft(editor.getHTML())
         } else {
             // Leaving source view: whatevver was typed becomes the new source of truth, resyncing the
             // visual editor to match: this is what keeps HTML and WYSIWYG from ever silently diverging.
@@ -286,19 +287,20 @@ function TiptapEditor({ value, onChange }: { value: string; onChange: (html: str
     return (
         <div className="rounded-lg border">
             <Toolbar editor={editor} htmlMode={htmlMode} onToggleHtmlMode={toggleHtmlMode} />
-            { htmlMode ? (
+            <div className={htmlMode ? "hidden" : ""}>
+                <EditorContent editor={editor} />
+            </div>
+            {htmlMode && (
                 <Textarea
+                    data-testid="editor-html-source"
                     value={htmlDraft}
                     onChange={(e) => setHtmlDraft(e.target.value)}
                     className="min-h-32 rounded-none border-0 font-mono text-xs"
                 />
-            ) : (
-                <EditorContent editor={editor} />
             )}
             {editor && (
                 <p className="text-xs text-muted-foreground text-right px-3 pb-2">
-                    {editor.storage.characterCount.words()} words 
-                    · {editor.storage.characterCount.characters()} characters
+                    {editor.storage.characterCount.words()} words · {editor.storage.characterCount.characters()} characters
                 </p>
             )}
         </div>

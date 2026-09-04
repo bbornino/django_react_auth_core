@@ -9,10 +9,27 @@ const options = [
     { value: "all", label: "All" },
 ]
 
+// value and label deliberately differ here — this is the exact shape that
+// exposed the real bug: SelectValue was echoing the raw value ("2") instead
+// of looking up its matching option's label ("Heading 2"). Options where
+// value === label (like the set above) can't catch that regression at all,
+// since the wrong behavior and the right behavior look identical.
+const headingOptions = [
+    { value: "paragraph", label: "Paragraph" },
+    { value: "1", label: "Heading 1" },
+    { value: "2", label: "Heading 2" },
+]
+
 describe("SelectInput", () => {
     it("displays the currently selected option's label", () => {
         render(<SelectInput value="20" onValueChange={() => {}} options={options} />)
         expect(screen.getByText("20")).toBeInTheDocument()
+    })
+
+    it("displays the option's LABEL, not its raw value, when they differ", () => {
+        render(<SelectInput value="2" onValueChange={() => {}} options={headingOptions} />)
+        expect(screen.getByText("Heading 2")).toBeInTheDocument()
+        expect(screen.queryByText("2")).not.toBeInTheDocument()
     })
 
     it("selecting a different option calls onValueChange with that option's value", async () => {
@@ -23,9 +40,6 @@ describe("SelectInput", () => {
         await user.click(screen.getByRole("combobox"))
         await user.click(screen.getByRole("option", { name: "All" }))
 
-        // Confirms the null-filtering fix holds under a real selection: a
-        // genuine string value reaches the caller, never null, even though
-        // Base UI's underlying onValueChange signature allows null.
         expect(handleChange).toHaveBeenCalledWith("all")
         expect(handleChange).not.toHaveBeenCalledWith(null)
     })
