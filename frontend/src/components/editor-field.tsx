@@ -61,6 +61,7 @@ function ToolbarButton({ label, active, disabled, onClick, children }: {
             <TooltipTrigger render={
                 <Button type="button" size="sm" disabled={disabled}
                     variant={active ? "default" : "outline"}
+                    aria-label={label}
                     onClick={onClick}>
                         {children}
                     </Button>
