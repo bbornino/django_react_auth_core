@@ -13,6 +13,8 @@ type SelectInputProps = {
 }
 
 export function SelectInput({ value, onValueChange, options, id, className }: SelectInputProps) {
+    const selectedLabel = options.find((opt) => opt.value === value)?.label ?? value
+
     return (
         <Select value={value} 
                 onValueChange={(newValue) => {
@@ -20,7 +22,7 @@ export function SelectInput({ value, onValueChange, options, id, className }: Se
                 }}
         >
             <SelectTrigger id={id} className={className}>
-                <SelectValue />
+                <SelectValue>{selectedLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
                 {options.map((opt) => (

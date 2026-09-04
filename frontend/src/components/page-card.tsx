@@ -1,10 +1,18 @@
 // components/page-card.tsx
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
-export function PageCard({ title, center = true, children}: { title?: string; center?: boolean; children: React.ReactNode}) {
+type PageCardProps = {
+    title?: string
+    center?: boolean
+    maxWidth?: string
+    children: React.ReactNode
+}
+
+export function PageCard({ title, center = true, maxWidth = "max-w-xl", children}: PageCardProps) {
     return (
-        <div className={center ? "flex min-h-screen items-center justify-center" : "pt-12 flex justify-center"}>
-            <Card className="w-full max-w-xl">
+        <div className={cn("px-4", center ? "flex min-h-screen items-center justify-center" : "pt-12 flex justify-center")}>
+            <Card className={cn("w-full", maxWidth)}>
                 {title && (
                     <CardHeader className="border-b pb-4">
                         <CardTitle className="text-2xl">{title}</CardTitle>

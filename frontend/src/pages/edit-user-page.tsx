@@ -12,7 +12,8 @@ import { mapUserResponse } from "@/lib/map-user-response"
 import { PageCard } from "@/components/page-card"
 import { TextField } from "@/components/text-field"
 import { CheckboxField } from "@/components/checkbox-field"
-import { TextareaField } from "@/components/textarea-field"
+// import { TextareaField } from "@/components/textarea-field"
+import { EditorField } from "@/components/editor-field"
 import { SelectField } from "@/components/select-field"
 import { Button } from "@/components/ui/button"
 import { ROLE_OPTIONS } from "@/lib/constants"
@@ -82,7 +83,7 @@ export function EditUserPage() {
     if (loading) return <div className="p-4">Loading User...</div>
 
     return(
-        <PageCard title="Edit User" center={false}>
+        <PageCard title="Edit User" center={false} maxWidth="max-w-8xl">
             { user && !isAdmin &&  (
                 <div className="text-sm text-muted-foreground space-y-1 grid grid cols-1 lg:grid-cols-4 gap-4">
                     <UserAvatar avatarUrl={user.avatar_url} name={user.name} size={48} />
@@ -94,36 +95,48 @@ export function EditUserPage() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
 
-                { user && isAdmin && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                        <div className="lg:col-span-1">
+                { user && isAdmin ? (
+                    <div className="grid grid-cols-12 sm:grid-cols-12 lg:grid-cols-12 gap-4">
+                        <div className="sm:col-span-1">
                             <UserAvatar avatarUrl={user.avatar_url} name={user.name} size={48} />
                         </div>
-                        <div className="lg:col-span-5">
+                        <div className="col-span-5 md:col-span-5 lg:col-span-2">
                             <SelectField label="Role" id="role" control={control} options={ROLE_OPTIONS} error={errors.role?.message} />
                         </div>
-                        <div className="lg:col-span-3">
+                        <div className="col-span-3 md:col-span-3 lg:col-span-1">
                             <CheckboxField label="Is Active" id="is_active" control={control} error={errors.is_active?.message} />
                         </div>
-                        <div className="lg:col-span-3">
+                        <div className="col-span-3 md:col-span-3 lg:col-span-1">
                             <CheckboxField label="Is Staff" id="is_staff" control={control} error={errors.is_staff?.message} />
                         </div>
+                        <div className="col-span-6 lg:col-span-3">
+                            <TextField label="Name" id="name" register={register} error={errors.name?.message} />
+                        </div>
+                        <div className="col-span-3 lg:col-span-2">
+                            <CheckboxField label="Dark Mode" id="dark_mode" control={control} error={errors.dark_mode?.message} />
+                        </div>
+                        <div className="col-span-3 lg:col-span-2">
+                            <CheckboxField label="Email Opt Out" id="email_opt_out" control={control} error={errors.email_opt_out?.message} />
+                        </div>
+                </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <div className="lg:col-span-6">
+                            <TextField label="Name" id="name" register={register} error={errors.name?.message} />
+                        </div>
+                        <div className="lg:col-span-3">
+                            <CheckboxField label="Dark Mode" id="dark_mode" control={control} error={errors.dark_mode?.message} />
+                        </div>
+                        <div className="lg:col-span-3">
+                            <CheckboxField label="Email Opt Out" id="email_opt_out" control={control} error={errors.email_opt_out?.message} />
+                        </div>
+                        
                     </div>
                 )}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                    <div className="lg:col-span-6">
-                        <TextField label="Name" id="name" register={register} error={errors.name?.message} />
-                    </div>
-                    <div className="lg:col-span-3">
-                        <CheckboxField label="Dark Mode" id="dark_mode" control={control} error={errors.dark_mode?.message} />
-                    </div>
-                    <div className="lg:col-span-3">
-                        <CheckboxField label="Email Opt Out" id="email_opt_out" control={control} error={errors.email_opt_out?.message} />
-                    </div>
-                    
-                </div>
+                
 
-                <TextareaField label="About Me" id="about_me" register={register} rows={4} error={errors.about_me?.message} />
+                {/* <TextareaField label="About Me" id="about_me" register={register} rows={4} error={errors.about_me?.message} /> */}
+                <EditorField label="About Me" id="about_me" control={control} error={errors.about_me?.message} />
 
                 <SystemError message={serverError} />
 
